@@ -1,17 +1,17 @@
 // const container = d3.select('#container');
 // const padding = 4;
 
-const saleData = [
-    {Year: '2010', Qty: 1000},
-    {Year: '2011', Qty: 2330},
-    {Year: '2012', Qty: 4540},
-    {Year: '2013', Qty: 5550},
-    {Year: '2014', Qty: 1230},
-    {Year: '2015', Qty: 4349},
-    {Year: '2016', Qty: 7039},
-    {Year: '2017', Qty: 4034},
-    {Year: '2018', Qty: 3035},
-    {Year: '2019', Qty: 2043}
+const data = [
+    {Year: '2010', Person: 1000},
+    {Year: '2011', Person: 2330},
+    {Year: '2012', Person: 4540},
+    {Year: '2013', Person: 5550},
+    {Year: '2014', Person: 1230},
+    {Year: '2015', Person: 4349},
+    {Year: '2016', Person: 7039},
+    {Year: '2017', Person: 4034},
+    {Year: '2018', Person: 3035},
+    {Year: '2019', Person: 2043}
 ];
 
 const svg = d3.select('#svg');
@@ -22,11 +22,12 @@ const chartArea = {
     'height': parseInt(svg.style('height')) - padding.top-padding.bottom
 };
 
+const tooltip = d3.select("body").append('div').attr('class', 'toolTip');
 const yScale = d3.scaleLinear()
-                .domain([0, d3.max(saleData, function (d,i) {return d.Qty })])
+                .domain([0, d3.max(data, (d,i) => d.Person)])
                 .range([chartArea.height, 0]).nice();
 const xScale = d3.scaleBand()
-                .domain(saleData.map(function(d) {return d.Year}))
+                .domain(data.map( (d) => d.Year))
                 .range([0,chartArea.width])
                 .padding(.2);
 
@@ -52,51 +53,39 @@ const rectGrp = svg.append('g')
                         'transform', 'translate('+padding.left+', '+padding.top+')'
                     );
 
-rectGrp.selectAll('rect').data(saleData)
+rectGrp.selectAll('rect').data(data)
                         .enter()
                         .append('rect')
+                        .attr('class', 'bar')
                         .attr('width', xScale.bandwidth())
-                        .attr('height', function(d,i) {
-                            return chartArea.height-yScale(d.Qty);
-                        })
-                        .attr('x', function(d,i) {
-                            return xScale(d.Year);
-                        })
-                        .attr('y', function(d,i) {
-                            return yScale(d.Qty);
-                        })
-                        .attr('fill', function(d,i) {
-                            return colors[i];
-                        })
+                        .attr('height', (d,i) => chartArea.height-yScale(d.Person))
+                        .attr('x', (d,i) => xScale(d.Year))
+                        .attr('y', (d,i) => yScale(d.Person))
+                        .attr('fill', (d,i) => colors[i])
 
-// const bar = container.append('div');
-// bar.classed('bar', true)
-//     .style('width', '60px')
-//     .style('height', yScale(500)+'px');
+                        
+rectGrp.selectAll('rect').data(data)
+                        .on('mousemove', function(d) {
+                            tooltip
+                            .style('left', d3.event.pageX - 50 + 'px')
+                            .style('top', d3.event.pageY - 70 + 'px')
+                            .style('display', 'inline-block')
+                            .html((d.Year) + ': ' + (d.Person) + ' Prisoners');
+                            })
+                        .on('mouseout', function(d) { tooltip.style('display', 'none'); })
+                        .on('click', d => {
+                            console.log('clicked on: ', d);
+                        });
 
-// let svg = d3.select('#container')
-//             .append('svg')
-//             .attr('width', w)
-//             .attr('height', h);
 
-// svg.selectAll('rect')
-//   .data(dataset)
-//   .enter()
-//     .append('rect')
-//     .attrs({
-//       x: (d, i) => i * (w / dataset.length),
-//       y: d => h - d,
-//       width: w / dataset.length - padding,
-//       height: d => d,
-//       fill: 'green'
-// });
-
-// svg.selectAll('text')
-//   .data(dataset)
-//   .enter()
-//     .append('text')
-//     .text((d) => d)
-//     .attrs({
-//       x: (d,i) => i * (w / dataset.length) + (w / dataset.length - padding) / 2,
-//       y: (d) => h - d + 25
-// });
+// Display Text on each bar charts
+                        rectGrp.selectAll('.text')
+                        .data(data)
+                        .enter()
+                        .append('text')
+                        .attr('class', 'text')
+                        // .text(d => d.Candidates)
+                        .attr('x', (a) => xScale(a.Year) + xScale.bandwidth() / 2)
+                        .attr('y', (a) => yScale(a.Person) - 3)
+                        .attr('text-anchor', 'middle')
+                        .text((a) => `${a.Person}`)
